@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Calendar & Schedule</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #141414;
+      padding: 0px;
+    }
+
+    h3 {
+        color: #f0f0f0;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #272822;
+      border-radius: 0px;
+      box-shadow: 0 20px 50px rgb(0, 0, 0);
+      overflow: hidden;
+    }
+
+    .header {
+      background: #272822;
+      color: #ff575f;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .user-greeting {
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      border-left: 3px solid #79973e;
+    }
+
+    .user-greeting p {
+      color: #f0f0f0;
+      font-size: 16px;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .user-greeting span {
+      font-weight: bold;
+      color: #79973e;
+    }
+
+    .content {
+      padding: 10px;
+    }
+
+
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #4e4e4e;
+    }
+
+    .spinner {
+      border: 2px solid #0f0f0f;
+      border-top: 2px solid #90b34c ;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+
+
+    .sheet-tab {
+      margin-bottom: 30px;
+    }
+
+    .sheet-tab h3 {
+      margin-bottom: 10px;
+      color: #696969;
+      font-size: 16px;
+    }
+
+    .google-sheet-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8px;
+      border: 1px solid #ddd;
+      background: white;
+      margin-bottom: 20px;
+    }
+
+    .google-sheet-table td {
+      border: 1px solid #ddd;
+      padding: 1px 2px;
+      text-align: center;
+      vertical-align: middle;
+      min-width: 30px;
+      max-width: 60px;
+      word-wrap: break-word;
+    }
+
+    .google-sheet-table .sheet-header {
+      background: #f8f9fa;
+      font-weight: bold;
+      font-size: 7px;
+    }
+
+    .google-sheet-table .shift-column {
+      text-align: left;
+      font-weight: bold;
+      background: #f8f9fa;
+      min-width: 60px;
+      max-width: 80px;
+    }
+
+    .google-sheet-table .has-employee {
+      background: #e8f5e8;
+      font-weight: bold;
+    }
+
+    .schedule-table-container {
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    .day-navigation-section {
+      background: #272822  ;
+      padding: 5px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      
+    }
+
+    .day-navigation-section h3 {
+      margin-bottom: 15px;
+      color: #333;
+      font-size: 16px;
+    }
+
+    .day-controls {
+      display: grid;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .nav-button {
+      background: #75715E ;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .day-navigation-buttons {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .nav-button:hover {
+      background: #0056b3;
+    }
+
+    .nav-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .current-day {
+      font-size: 32px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #f0f0f0;
+      min-width: 150px;
+      height: 117px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .day-schedule {
+      background: #272822 ;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      min-height: 100px;
+    }
+
+    .shift-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 5px;
+    }
+
+    .shift-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .shift-name {
+      font-weight: normal;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .employee-name {
+      color: #f0f0f0 ;
+      font-weight: bold;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    .no-shifts {
+      color: #666;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .shift-section {
+      margin-bottom: 20px;
+    }
+
+    .section-header {
+      margin: 0 0 0px 0;
+      padding: 8px 12px;
+      border-radius: 0px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .day-header {
+        background: #131313;
+      color: #66D9EF;
+      
+    }
+
+    .night-header {
+        background: #131313;
+      color: #AE81FF ;
+      
+    }
+
+    .requested-off-header {
+        background: #131313;
+      color: #f92642;
+      
+    }
+
+    /* Fallback styles for old table format */
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 12px;
+      border: 1px solid #ddd;
+      background: white;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .schedule-table th {
+      background: #f8f9fa;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    .schedule-table td:first-child {
+      text-align: left;
+      font-weight: bold;
+      background: #f8f9fa;
+      min-width: 120px;
+    }
+
+    .schedule-table td.has-employee {
+      background: #e8f5e8;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #f92642;
+      background: #ffebee;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+
+    .logout {
+      background: #f92642 ;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .logout:hover {
+      background: #f92642;
+    }
+
+    .name-input-section {
+      background: #272822  ;
+      padding: 20px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      border: 2px solid #1b1b1b;
+    }
+
+    .name-input-section h3 {
+      margin-bottom: 10px;
+      color: #f5f5f5;
+    }
+
+    .name-input-section p {
+      margin-bottom: 5px;
+      color: #666;
+    }
+
+    .input-group {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .name-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #6c757d;
+      border-radius: 4px;
+      font-size: 14px;
+      background: rgb(221, 224, 205);
+    }
+
+    .color-selector {
+      padding: 8px 12px;
+      border: 1px solid #d6d6d6;
+      border-radius: 4px;
+      font-size: 14px;
+      background: rgb(221, 224, 205);
+      min-width: 120px;
+    }
+
+
+
+    .add-button {
+      background: #79973e ;
+      color: rgb(27, 27, 27);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .add-button:hover {
+      background: #218838;
+    }
+
+    .add-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .test-button {
+      background: #17a2b8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .test-button:hover {
+      background: #138496;
+    }
+
+    .undo-button {
+      background: #FD971F   ;
+      color: #212529;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .undo-button:hover {
+      background: #e0a800;
+    }
+
+    .delete-event-btn {
+      background: #f92642 ;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    .delete-event-btn:hover {
+      background: #c82333;
+    }
+
+    .status-success {
+      color: #155724;
+      background: #d4edda;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    .status-error {
+      color: #721c24;
+      background: #f8d7da;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    .status-loading {
+      color: #0c5460;
+      background: #d1ecf1;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #272822;
+      border: 2px solid #1b1b1b;
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .modal-content h2 {
+      color: #f0f0f0;
+      margin-bottom: 15px;
+    }
+
+    .modal-content p {
+      color: #6e6e6e;
+      margin-bottom: 20px;
+    }
+
+    .modal-buttons {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+      <!-- Name Prompt Modal -->
+    <div id="name-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h2>Welcome to Diablo Burger!</h2>
+        <p>Please enter your first name to get started:</p>
+        <input type="text" id="firstName-input" placeholder="Enter your first name" class="name-input" onkeypress="handleNameKeyPress(event)">
+        <div class="modal-buttons">
+          <button onclick="saveName()" class="add-button">Save Name</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="header">
+        <h1>Diablo Burger</h1>
+        <div id="user-greeting" class="user-greeting" style="display: none;">
+          <p>Hello <span id="user-name">____</span>, your next shift is on <span id="next-shift-date">DATE</span> - <span id="next-shift-title">SHIFT-TITLE</span></p>
+        </div>
+        
+        <!-- <button class="logout" onclick="logout()">Logout</button> -->
+      </div>
+    
+    <div class="content">
+      <!-- Test Spinner Button -->
+      <!-- <button onclick="testSpinner()" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-bottom: 10px; cursor: pointer;">Test Spinner</button> -->
+      
+      <!-- Schedule Content -->
+      <div id="schedule-tab" class="tab-content active">
+        <div id="schedule-loading" class="loading">
+          <div class="spinner"></div>
+          <p>Loading schedule...</p>
+        </div>
+        
+
+
+        <div id="schedule-content" style="display: none;">
+
+            <!-- Day-by-Day Navigation Section -->
+          <div class="day-navigation-section">
+            <div class="day-controls">
+              
+              <span id="current-day-display" class="current-day">Loading...</span>
+              <div class="day-navigation-buttons">
+                <button onclick="previousDay()" class="nav-button">← Back</button>
+                <button onclick="goToToday()" class="nav-button" style="background: #397547;">Today</button>
+                <button onclick="nextDay()" class="nav-button">Next →</button>
+              </div>
+              
+            </div>
+            <div id="day-schedule" class="day-schedule">
+              <p>Loading today's schedule...</p>
+            </div>
+          </div>
+        
+                      <div class="name-input-section">
+              <h3>Add Your Shifts to Calendar</h3>
+              <p>Enter your name to add shifts to your Google Calendar:</p>
+              <div class="input-group">
+                <input type="text" id="employee-name" placeholder="Enter your name" class="name-input">
+                <select id="shift-color" class="color-selector">
+                  <option value="">Default Color</option>
+                  <option value="1">Lavender</option>
+                  <option value="2">Sage</option>
+                  <option value="3">Grape</option>
+                  <option value="4">Flamingo</option>
+                  <option value="5">Banana</option>
+                  <option value="6">Tangerine</option>
+                  <option value="7">Peacock</option>
+                  <option value="8">Graphite</option>
+                  <option value="9">Blueberry</option>
+                  <option value="10">Basil</option>
+                  <option value="11">Red</option>
+                </select>
+                <button onclick="addShiftsToCalendar()" class="add-button">Add All Shifts to Calendar</button>
+                <button onclick="undoLastEvents()" class="undo-button">Undo Last Shifts Added</button>
+                <!--<button onclick="testCalendar()" class="test-button">Test Calendar</button>-->
+              </div>
+              <div id="add-status" style="display: none;"></div>
+            </div>
+          
+          <br>
+          <br>
+          <br>
+          <h3>Google Sheets View</h3>
+          <hr>
+          
+          <div id="schedule-table-container"></div>
+          
+        </div>
+        
+        <div id="no-schedule" style="display: none;">
+          <p>No schedule data available.</p>
+        </div>
+        
+        <div id="schedule-error" class="error" style="display: none;">
+          <p>Error loading schedule. Please try again.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let scheduleData = null;
+
+
+
+    async function loadSchedule() {
+      try {
+        const response = await fetch('/schedule');
+        if (!response.ok) throw new Error('Failed to load schedule');
+        
+        const data = await response.json();
+        scheduleData = data;
+        displaySchedule(data);
+        
+        // Initialize day navigation after schedule loads
+        updateDayDisplay();
+        loadDaySchedule(); // Show today's schedule by default
+        
+        // Update greeting with next shift if user has a name
+        const userNameElement = document.getElementById('user-name');
+        if (userNameElement && userNameElement.textContent !== '____') {
+          findNextShift(userNameElement.textContent);
+          
+          // If we found a next shift, update the day navigation
+          if (userNextShiftDate) {
+            currentDate = new Date(userNextShiftDate);
+            updateDayDisplay();
+            loadDaySchedule();
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showScheduleError();
+      }
+    }
+
+
+
+    function displaySchedule(data) {
+      document.getElementById('schedule-loading').style.display = 'none';
+      
+      if (!data.schedule || data.schedule.length === 0) {
+        document.getElementById('no-schedule').style.display = 'block';
+        return;
+      }
+      
+      const contentEl = document.getElementById('schedule-content');
+      contentEl.style.display = 'block';
+      
+      // Keep the input section and only update the table container
+      const tableContainer = document.getElementById('schedule-table-container');
+      
+      // Display the HTML tables from the server
+      if (data.htmlTables && data.htmlTables.length > 0) {
+        tableContainer.innerHTML = data.htmlTables.join('');
+      } else {
+        // Fallback to the old table format if no HTML tables
+        let tableHtml = '<table class="schedule-table">';
+        
+        // Add header row with dates
+        tableHtml += '<thead><tr><th>Shift</th>';
+        if (data.dateHeaders) {
+          data.dateHeaders.forEach(date => {
+            tableHtml += `<th>${date}</th>`;
+          });
+        }
+        tableHtml += '</tr></thead><tbody>';
+        
+        // Add shift rows
+        data.schedule.forEach(shift => {
+          tableHtml += '<tr>';
+          tableHtml += `<td><strong>${shift.shift}</strong></td>`;
+          
+          if (data.dateHeaders) {
+            data.dateHeaders.forEach(date => {
+              const value = shift.dates[date] || '';
+              const hasEmployee = value && value.trim() !== '';
+              tableHtml += `<td class="${hasEmployee ? 'has-employee' : ''}">${value}</td>`;
+            });
+          }
+          
+          tableHtml += '</tr>';
+        });
+        
+        tableHtml += '</tbody></table>';
+        tableContainer.innerHTML = tableHtml;
+      }
+    }
+
+
+
+    function showScheduleError() {
+      document.getElementById('schedule-loading').style.display = 'none';
+      document.getElementById('schedule-error').style.display = 'block';
+    }
+
+    function logout() {
+      window.location.href = '/';
+    }
+
+    async function addShiftsToCalendar() {
+      const employeeName = document.getElementById('employee-name').value.trim();
+      const addButton = document.querySelector('.add-button');
+      const statusEl = document.getElementById('add-status');
+      
+      if (!employeeName) {
+        showStatus('Please enter your name', 'error');
+        return;
+      }
+      
+      if (!scheduleData) {
+        showStatus('Schedule data not loaded', 'error');
+        return;
+      }
+      
+      // Disable button and show loading
+      addButton.disabled = true;
+      showStatus('Adding shifts to your calendar...', 'loading');
+      
+      try {
+        // Find shifts for this employee
+        const employeeShifts = [];
+        
+        console.log('Searching for employee:', employeeName);
+        console.log('Schedule data:', scheduleData);
+        
+        scheduleData.schedule.forEach(shift => {
+          if (scheduleData.dateHeaders) {
+            scheduleData.dateHeaders.forEach(date => {
+              const shiftValue = shift.dates[date];
+              console.log(`Checking shift: ${shift.shift}, date: ${date}, value: ${shiftValue}`);
+              if (shiftValue && shiftValue.toLowerCase().includes(employeeName.toLowerCase())) {
+                console.log(`Found match for ${employeeName}: ${shift.shift} on ${date}`);
+                employeeShifts.push({
+                  shift: shift.shift,
+                  date: date,
+                  employee: shiftValue
+                });
+              }
+            });
+          }
+        });
+        
+        console.log('Found shifts:', employeeShifts);
+        
+        if (employeeShifts.length === 0) {
+          showStatus(`No shifts found for "${employeeName}"`, 'error');
+          addButton.disabled = false;
+          return;
+        }
+        
+        // Get selected color
+        const selectedColor = document.getElementById('shift-color').value;
+        
+        // Send to server to add to calendar
+        const response = await fetch('/add-shifts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employeeName: employeeName,
+            shifts: employeeShifts,
+            colorId: selectedColor
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to add shifts to calendar');
+        }
+        
+        const result = await response.json();
+        let message = `Successfully added ${result.addedEvents.length} shifts to your calendar!`;
+        if (result.skippedEvents && result.skippedEvents.length > 0) {
+          message += ` (Skipped ${result.skippedEvents.length} duplicates)`;
+        }
+        showStatus(message, 'success');
+        
+      } catch (error) {
+        console.error('Error adding shifts:', error);
+        showStatus('Error adding shifts to calendar. Please try again.', 'error');
+      }
+      
+      addButton.disabled = false;
+    }
+
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('add-status');
+      statusEl.textContent = message;
+      statusEl.className = `status-${type}`;
+      statusEl.style.display = 'block';
+    }
+
+    async function testCalendar() {
+      try {
+        const response = await fetch('/test-calendar');
+        if (!response.ok) throw new Error('Test failed');
+        
+        const result = await response.json();
+        showStatus(`Test successful! Event ID: ${result.eventId}`, 'success');
+      } catch (error) {
+        console.error('Test error:', error);
+        showStatus('Calendar test failed. Check console for details.', 'error');
+      }
+    }
+
+    async function undoLastEvents() {
+      try {
+        const response = await fetch('/undo-last-events', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) throw new Error('Undo failed');
+        
+        const result = await response.json();
+        if (result.success) {
+          showStatus(result.message, 'success');
+        } else {
+          showStatus(result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Undo error:', error);
+        showStatus('Failed to undo events. Please try again.', 'error');
+      }
+    }
+
+    async function deleteEvent(eventId) {
+      if (!confirm('Are you sure you want to delete this event?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/delete-event/${eventId}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) throw new Error('Delete failed');
+        
+        const result = await response.json();
+        showStatus(result.message, 'success');
+        
+        // Reload events to update the list
+        loadEvents();
+      } catch (error) {
+        console.error('Delete error:', error);
+        showStatus('Failed to delete event. Please try again.', 'error');
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDateTime(dateTimeStr) {
+      try {
+        const date = new Date(dateTimeStr);
+        if (isNaN(date.getTime())) return dateTimeStr;
+        
+        if (dateTimeStr.includes('T')) {
+          return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+        } else {
+          return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+        }
+      } catch (e) {
+        return dateTimeStr;
+      }
+    }
+
+    // Day navigation variables
+    let currentDate = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Phoenix"}));
+    let allDates = [];
+    let dayScheduleData = {};
+    let userNextShiftDate = null;
+
+    // Load schedule on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      checkUserInfo();
+      loadSchedule();
+    });
+
+    async function checkUserInfo() {
+      try {
+        const response = await fetch('/user-info');
+        if (!response.ok) throw new Error('Failed to get user info');
+        
+        const userInfo = await response.json();
+        
+        if (!userInfo.hasName) {
+          // Show name prompt modal for new users
+          document.getElementById('name-modal').style.display = 'flex';
+        } else {
+          // User already has a name, update greeting
+          updateUserGreeting(userInfo.firstName);
+        }
+      } catch (error) {
+        console.error('Error checking user info:', error);
+      }
+    }
+
+    function updateUserGreeting(firstName) {
+      document.getElementById('user-name').textContent = firstName;
+      document.getElementById('user-greeting').style.display = 'block';
+      
+      // Find next shift after schedule loads
+      if (scheduleData) {
+        findNextShift(firstName);
+        
+        // If we found a next shift, update the day navigation
+        if (userNextShiftDate) {
+          currentDate = new Date(userNextShiftDate);
+          updateDayDisplay();
+          loadDaySchedule();
+        }
+      }
+    }
+
+    function findNextShift(userName) {
+      if (!scheduleData || !scheduleData.schedule) return;
+      
+      // Use Arizona timezone for consistent time handling
+      const today = new Date();
+      const now = new Date();
+      
+      // Convert to Arizona time for accurate comparisons
+      const arizonaTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Phoenix"}));
+      console.log(`[FRONTEND] Current Arizona time: ${arizonaTime.toDateString()} ${arizonaTime.toTimeString()}`);
+      const userShifts = [];
+      
+      console.log(`[FRONTEND] Available date headers:`, scheduleData.dateHeaders);
+      console.log(`[FRONTEND] Looking for shifts for user: ${userName}`);
+      
+      // Find all shifts for this user
+      scheduleData.schedule.forEach(shift => {
+        if (scheduleData.dateHeaders) {
+          scheduleData.dateHeaders.forEach(date => {
+            const employee = shift.dates[date];
+            console.log(`[FRONTEND] Checking shift "${shift.shift}" for date "${date}": employee="${employee}"`);
+            if (employee && employee.toLowerCase().includes(userName.toLowerCase())) {
+              // Parse the date
+              const dateMatch = date.match(/(\d+)\s*-\s*(\w+)/);
+              if (dateMatch) {
+                const day = parseInt(dateMatch[1]);
+                const monthName = dateMatch[2];
+                const months = {
+                  'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                  'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+                };
+                const month = months[monthName];
+                if (month !== undefined) {
+                  const shiftDate = new Date(arizonaTime.getFullYear(), month, day);
+                  
+                  // Always include today's shifts and future shifts
+                  if (shiftDate >= arizonaTime) {
+                    // Simple date-based logic - no time parsing
+                    const isToday = shiftDate.toDateString() === arizonaTime.toDateString();
+                    console.log(`[FRONTEND] Shift: ${shift.shift}, Date: ${shiftDate.toDateString()}, Today: ${arizonaTime.toDateString()}, isToday: ${isToday}`);
+                    
+                    // Always include today's shifts and future shifts
+                    userShifts.push({
+                      date: shiftDate,
+                      shift: shift.shift,
+                      dateString: date
+                    });
+                  }
+                }
+              }
+            }
+          });
+        }
+      });
+      
+      console.log(`[FRONTEND] Found ${userShifts.length} shifts for user ${userName}:`, userShifts);
+      
+      // Sort by date and find the next shift
+      userShifts.sort((a, b) => a.date - b.date);
+      const nextShift = userShifts[0];
+      
+      console.log(`[FRONTEND] Next shift after sorting:`, nextShift);
+      
+      if (nextShift) {
+        // Format the time from the actual shift date (which now includes the correct time)
+        let shiftTime = 'TBD';
+        if (nextShift.date) {
+          console.log(`[FRONTEND] Next shift date object: ${nextShift.date.toString()}`);
+          console.log(`[FRONTEND] Next shift date ISO: ${nextShift.date.toISOString()}`);
+          
+          // Convert the date to Arizona timezone to get the correct hours
+          const arizonaDate = new Date(nextShift.date.toLocaleString("en-US", {timeZone: "America/Phoenix"}));
+          const hour = arizonaDate.getHours();
+          const minute = arizonaDate.getMinutes();
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const displayHour = hour % 12 || 12;
+          shiftTime = `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
+          console.log(`[FRONTEND] Display time - hour: ${hour}, minute: ${minute}, ampm: ${ampm}, displayHour: ${displayHour}, shiftTime: ${shiftTime}`);
+        } else {
+          // Fallback to parsing from shift name if date doesn't have time
+          const timeMatch = nextShift.shift.match(/(\d{1,2}):(\d{2})/);
+          if (timeMatch) {
+            const hour = parseInt(timeMatch[1]);
+            const minute = timeMatch[2];
+            shiftTime = `${hour}:${minute}`;
+          }
+        }
+        
+        // Format the date based on how far in the future it is (using Arizona time)
+        const arizonaToday = new Date(arizonaTime);
+        const arizonaTomorrow = new Date(arizonaToday);
+        arizonaTomorrow.setDate(arizonaTomorrow.getDate() + 1);
+        
+        let dateDisplay;
+        if (nextShift.date.toDateString() === arizonaToday.toDateString()) {
+          dateDisplay = 'Today';
+        } else if (nextShift.date.toDateString() === arizonaTomorrow.toDateString()) {
+          dateDisplay = 'Tomorrow';
+        } else {
+          const options = { weekday: 'short', month: 'short', day: 'numeric' };
+          dateDisplay = nextShift.date.toLocaleDateString('en-US', options);
+        }
+        
+        document.getElementById('next-shift-date').textContent = dateDisplay;
+        document.getElementById('next-shift-title').textContent = nextShift.shift;
+        
+        // Set the day navigation to show the user's next shift
+        userNextShiftDate = nextShift.date;
+        if (scheduleData) {
+          currentDate = new Date(userNextShiftDate);
+          updateDayDisplay();
+          loadDaySchedule();
+        }
+      } else {
+        document.getElementById('next-shift-date').textContent = 'No upcoming shifts';
+        document.getElementById('next-shift-title').textContent = '';
+      }
+    }
+
+    async function saveName() {
+      const firstName = document.getElementById('firstName-input').value.trim();
+      
+      if (!firstName) {
+        alert('Please enter your first name');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/save-name', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ firstName })
+        });
+        
+        if (!response.ok) throw new Error('Failed to save name');
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Hide modal and update greeting
+          document.getElementById('name-modal').style.display = 'none';
+          updateUserGreeting(result.firstName);
+        }
+      } catch (error) {
+        console.error('Error saving name:', error);
+        alert('Error saving name. Please try again.');
+      }
+    }
+
+    function handleNameKeyPress(event) {
+      if (event.key === 'Enter') {
+        saveName();
+      }
+    }
+
+    function previousDay() {
+      currentDate.setDate(currentDate.getDate() - 1);
+      updateDayDisplay();
+      loadDaySchedule();
+    }
+
+    function nextDay() {
+      currentDate.setDate(currentDate.getDate() + 1);
+      updateDayDisplay();
+      loadDaySchedule();
+    }
+
+    function goToToday() {
+      // Use Arizona time for "Today" button
+      const arizonaTime = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Phoenix"}));
+      currentDate = new Date(arizonaTime);
+      updateDayDisplay();
+      loadDaySchedule();
+    }
+
+
+
+    function updateDayDisplay() {
+      const display = document.getElementById('current-day-display');
+      const options = { weekday: 'long', month: 'long', day: 'numeric' };
+      
+      // Use Arizona time for consistent date comparisons
+      const arizonaTime = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Phoenix"}));
+      const arizonaToday = new Date(arizonaTime);
+      const arizonaTomorrow = new Date(arizonaToday);
+      arizonaTomorrow.setDate(arizonaTomorrow.getDate() + 1);
+      
+      const isToday = currentDate.toDateString() === arizonaToday.toDateString();
+      const isTomorrow = currentDate.toDateString() === arizonaTomorrow.toDateString();
+      
+      if (isToday) {
+        display.textContent = `TODAY - ${currentDate.toLocaleDateString('en-US', options)}`;
+        display.style.fontWeight = 'bold';
+        display.style.color = '#ffffff';
+      } else if (isTomorrow) {
+        display.textContent = `TOMORROW - ${currentDate.toLocaleDateString('en-US', options)}`;
+        display.style.fontWeight = 'bold';
+        display.style.color = '#ffffff';
+      } else {
+        display.textContent = currentDate.toLocaleDateString('en-US', options);
+        display.style.fontWeight = 'bold';
+        display.style.color = '#ffffff';
+      }
+    }
+
+    function loadDaySchedule() {
+      if (!scheduleData || !scheduleData.schedule) {
+        document.getElementById('day-schedule').innerHTML = '<p class="no-shifts">Loading schedule data...</p>';
+        return;
+      }
+
+      const dayKey = formatDateForSchedule(currentDate);
+      const dayShifts = [];
+      const nightShifts = [];
+      const requestedOffNames = [];
+
+      // Find all shifts for this day and categorize them
+      // Only include shifts from rows 7-16 (day shifts) and 18-25 (night shifts)
+      scheduleData.schedule.forEach((shift, index) => {
+        if (scheduleData.dateHeaders) {
+          scheduleData.dateHeaders.forEach(date => {
+            if (date === dayKey) {
+              const employee = shift.dates[date];
+              if (employee && employee.trim() !== '') {
+                const shiftInfo = {
+                  shift: shift.shift,
+                  employee: employee
+                };
+                
+                // Check for "Requested Off" names from rows 5 and 11 first
+                // Use the original row number from the server
+                const originalRow = shift.originalRow || (index + 1); // Fallback to index if originalRow not available
+                if (originalRow === 5 || originalRow === 11) {
+                  requestedOffNames.push(employee);
+                } else {
+                  // Categorize other shifts based on row position (AM vs PM)
+                  const shiftRow = getShiftRow(shift.shift);
+                  if (shiftRow >= 7 && shiftRow <= 16) {
+                    dayShifts.push(shiftInfo);
+                  } else if (shiftRow >= 18 && shiftRow <= 25) {
+                    nightShifts.push(shiftInfo);
+                  }
+                }
+              }
+            }
+          });
+        }
+      });
+
+      displayDaySchedule(dayShifts, nightShifts, requestedOffNames);
+    }
+
+    function getShiftRow(shiftName) {
+      // Categorize shifts based on their names and patterns
+      const shiftNameLower = shiftName.toLowerCase();
+      
+      // Day shifts (rows 7-16) - typically start earlier, end earlier
+      if (shiftNameLower.includes('10:00') || 
+          shiftNameLower.includes('11:00') || 
+          shiftNameLower.includes('12:00') ||
+          shiftNameLower.includes('slow') ||
+          shiftNameLower.includes('requests off')) {
+        return 8; // Day shift row (within 7-16 range)
+      }
+      
+      // Night shifts (rows 18-25) - typically start later, end later
+      if (shiftNameLower.includes('4:00') || 
+          shiftNameLower.includes('4:30') || 
+          shiftNameLower.includes('5:00') ||
+          shiftNameLower.includes('close')) {
+        return 20; // Night shift row (within 18-25 range)
+      }
+      
+      // Default to day shift for unknown patterns
+      return 8;
+    }
+
+    function formatDateForSchedule(date) {
+      const day = date.getDate();
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = monthNames[date.getMonth()];
+      return `${day} - ${month}`;
+    }
+
+    function displayDaySchedule(dayShifts, nightShifts, requestedOffNames) {
+      const container = document.getElementById('day-schedule');
+      
+      if (dayShifts.length === 0 && nightShifts.length === 0 && requestedOffNames.length === 0) {
+        container.innerHTML = '<p class="no-shifts">No shifts scheduled for this day</p>';
+        return;
+      }
+
+      let html = '';
+      
+      // Day Shifts Section
+      if (dayShifts.length > 0) {
+        html += '<div class="shift-section">';
+        html += '<h4 class="section-header day-header">Day Shifts</h4>';
+        dayShifts.forEach(shift => {
+          html += `
+            <div class="shift-item">
+              <span class="employee-name">${shift.employee.toUpperCase()}</span>
+              <span class="shift-name">${shift.shift}</span>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+      
+      // Night Shifts Section
+      if (nightShifts.length > 0) {
+        html += '<div class="shift-section">';
+        html += '<h4 class="section-header night-header">Night Shifts</h4>';
+        nightShifts.forEach(shift => {
+          html += `
+            <div class="shift-item">
+              <span class="employee-name">${shift.employee.toUpperCase()}</span>
+              <span class="shift-name">${shift.shift}</span>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+      
+      // Requested Off Section
+      if (requestedOffNames.length > 0) {
+        html += '<div class="shift-section">';
+        html += '<h4 class="section-header requested-off-header">Requested Off</h4>';
+        
+        // Process each requested off name and split by "/" if needed
+        requestedOffNames.forEach(name => {
+          // Split by "/" and trim whitespace
+          const individualNames = name.split('/').map(n => n.trim()).filter(n => n);
+          
+          individualNames.forEach(individualName => {
+            html += `
+              <div class="shift-item">
+                <span class="employee-name">${individualName.toUpperCase()}</span>
+              </div>
+            `;
+          });
+        });
+        
+        html += '</div>';
+      }
+
+      container.innerHTML = html;
+    }
+
+
+  </script>
+</body>
+</html> 
